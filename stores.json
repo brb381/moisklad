@@ -1,0 +1,23 @@
+[
+  {
+    "code": "planeta",
+    "name": "\u041f\u043b\u0430\u043d\u0435\u0442\u0430",
+    "aliases": ["\u043f\u043b\u0430\u043d\u0435\u0442\u0430", "planeta"],
+    "template_hint": "\u041f\u043b\u0430\u043d\u0435\u0442\u0430",
+    "moysklad_retail_store_id": null
+  },
+  {
+    "code": "iyun",
+    "name": "\u0418\u044e\u043d\u044c",
+    "aliases": ["\u0438\u044e\u043d\u044c", "iyun", "iun"],
+    "template_hint": "\u0418\u044e\u043d\u044c",
+    "moysklad_retail_store_id": null
+  },
+  {
+    "code": "vysotnaya",
+    "name": "\u0412\u044b\u0441\u043e\u0442\u043d\u0430\u044f",
+    "aliases": ["\u0432\u044b\u0441\u043e\u0442\u043d\u0430\u044f", "vysotnaya", "visotnaya"],
+    "template_hint": "\u0412\u044b\u0441\u043e\u0442\u043d\u0430\u044f",
+    "moysklad_retail_store_id": null
+  }
+]
