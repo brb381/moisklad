@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from app.models import DailySales
-from app.moysklad import MoySkladClient
+import pytest
+
+from app.moysklad import MoySkladClient, ReadOnlyMoySkladSession
 from app.stores import StoreConfig
 
 
@@ -22,6 +24,14 @@ def test_retail_store_href_uses_configured_id_without_search(monkeypatch):
 
     href = client.retail_store_href(store)
     assert href.endswith("/entity/retailstore/12345678-1234-1234-1234-123456789abc")
+
+
+def test_moysklad_session_rejects_mutating_methods():
+    session = ReadOnlyMoySkladSession()
+
+    for method in ("POST", "PUT", "PATCH", "DELETE"):
+        with pytest.raises(RuntimeError, match="read-only"):
+            session.request(method, "https://api.moysklad.ru/api/remap/1.2/security/token")
 
 
 def test_list_retail_stores_extracts_ids():

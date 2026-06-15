@@ -65,9 +65,10 @@ def list_stores() -> list[dict[str, str]]:
 
 
 def find_template_for_store(store: StoreConfig) -> Path:
-    templates = sorted(
-        path for path in ROOT_DIR.glob("*.xlsx") if "валовом_обороте" in path.stem.lower()
-    )
+    template_dir = ROOT_DIR / "templates"
+    templates = sorted(path for path in template_dir.glob("*.xlsx") if not path.name.startswith("~$"))
+    if not templates:
+        templates = sorted(path for path in ROOT_DIR.glob("*.xlsx") if not path.name.startswith("~$"))
     if not templates:
         raise FileNotFoundError("No report template xlsx files found")
 

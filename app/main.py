@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from pydantic import BaseModel, Field
 
 from fastapi import FastAPI, HTTPException, Query
@@ -16,6 +18,21 @@ from .stores import list_stores
 
 app = FastAPI(title="MoySklad Gross Turnover Reports")
 
+MONTH_NAMES = {
+    1: "Январь",
+    2: "Февраль",
+    3: "Март",
+    4: "Апрель",
+    5: "Май",
+    6: "Июнь",
+    7: "Июль",
+    8: "Август",
+    9: "Сентябрь",
+    10: "Октябрь",
+    11: "Ноябрь",
+    12: "Декабрь",
+}
+
 
 class ReportRequest(BaseModel):
     store: str = Field(..., min_length=1)
@@ -31,6 +48,28 @@ def health():
 @app.get("/stores")
 def stores():
     return {"stores": list_stores()}
+
+
+@app.get("/months")
+def months(months_back: int = Query(24, ge=1, le=120)):
+    today = date.today()
+    current_index = today.year * 12 + today.month - 1
+    result = []
+    for offset in range(months_back):
+        month_index = current_index - offset
+        year = month_index // 12
+        month = month_index % 12 + 1
+        value = f"{year:04d}-{month:02d}"
+        result.append(
+            {
+                "value": value,
+                "label": f"{MONTH_NAMES[month]} {year}",
+                "year": year,
+                "month": month,
+                "is_current": offset == 0,
+            }
+        )
+    return {"months": result}
 
 
 @app.get("/moysklad/stores")

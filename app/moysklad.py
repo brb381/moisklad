@@ -12,9 +12,16 @@ from .models import DailySales
 from .stores import StoreConfig, resolve_store
 
 
+class ReadOnlyMoySkladSession(requests.Session):
+    def request(self, method: str, url: str, *args, **kwargs):
+        if method.upper() != "GET":
+            raise RuntimeError("MoySklad client is read-only: only GET requests are allowed")
+        return super().request(method, url, *args, **kwargs)
+
+
 class MoySkladClient:
     def __init__(self) -> None:
-        self.session = requests.Session()
+        self.session = ReadOnlyMoySkladSession()
         self.session.headers.update(
             {
                 "Accept": "application/json;charset=utf-8",
@@ -100,6 +107,7 @@ class MoySkladClient:
         params = {
             "filter": ";".join(filters),
             "expand": "positions",
+            "limit": 100,
             "order": "moment,asc",
         }
 
@@ -112,9 +120,9 @@ class MoySkladClient:
             target = result[day]
             target.gross += cents_to_rubles(doc.get("sum", 0))
             target.checks += 1
+            target.positions += 1
 
             positions = doc.get("positions", {}).get("rows") or []
-            target.positions += len(positions)
             for position in positions:
                 vat_rate = position.get("vat")
                 vat_value = cents_to_rubles(position.get("vatSum", 0))

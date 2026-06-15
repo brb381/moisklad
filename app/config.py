@@ -11,14 +11,21 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(ROOT_DIR / ".env")
 
 
+def optional_env(name: str) -> str | None:
+    value = (os.getenv(name) or "").strip()
+    if not value or value.startswith("your_"):
+        return None
+    return value
+
+
 @dataclass(frozen=True)
 class Settings:
     moysklad_base_url: str = os.getenv(
         "MOYSKLAD_BASE_URL", "https://api.moysklad.ru/api/remap/1.2"
     ).rstrip("/")
-    moysklad_token: str | None = os.getenv("MOYSKLAD_TOKEN") or None
-    moysklad_login: str | None = os.getenv("MOYSKLAD_LOGIN") or None
-    moysklad_password: str | None = os.getenv("MOYSKLAD_PASSWORD") or None
+    moysklad_token: str | None = optional_env("MOYSKLAD_TOKEN")
+    moysklad_login: str | None = optional_env("MOYSKLAD_LOGIN")
+    moysklad_password: str | None = optional_env("MOYSKLAD_PASSWORD")
 
     report_tenant: str = os.getenv("REPORT_TENANT", "ИП Леонтьев Д.С,")
     report_trade_name: str = os.getenv("REPORT_TRADE_NAME", "5LB")

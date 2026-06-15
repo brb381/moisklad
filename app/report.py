@@ -35,11 +35,6 @@ def build_report(store: str, start, end, daily_sales: dict, job_id: str | None =
     template = choose_template(store_config.name)
     wb = load_workbook(template)
     ws = wb.active
-    ws.sheet_view.view = "normal"
-    ws.sheet_view.zoomScale = 100
-    if ws.sheet_view.selection:
-        ws.sheet_view.selection[0].activeCell = "A1"
-        ws.sheet_view.selection[0].sqref = "A1"
 
     ws["B3"] = settings.report_tenant
     ws["H3"] = settings.report_trade_name
