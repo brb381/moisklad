@@ -76,4 +76,4 @@ def find_template_for_store(store: StoreConfig) -> Path:
     for path in templates:
         if hint in normalize_store_name(path.stem):
             return path
-    raise FileNotFoundError(f"No report template found for store: {store.name}")
+    return templates[0]

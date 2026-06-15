@@ -37,7 +37,7 @@ MONTH_NAMES = {
 class ReportRequest(BaseModel):
     store: str = Field(..., min_length=1)
     month: str = Field(..., pattern=r"^\d{4}-\d{2}$")
-    source: str | None = Field(default=None, pattern=r"^(mock|moysklad)$")
+    source: str | None = Field(default=None, pattern=r"^moysklad$")
 
 
 @app.get("/health")
@@ -146,7 +146,7 @@ def download_job_result(job_id: str):
 def gross_turnover_report(
     store: str = Query(..., description="Retail store name or part of name"),
     month: str = Query(..., pattern=r"^\d{4}-\d{2}$", description="YYYY-MM"),
-    source: str = Query("mock", pattern=r"^(mock|moysklad)$"),
+    source: str = Query("moysklad", pattern=r"^moysklad$"),
 ):
     """Compatibility endpoint: generate immediately.
 
