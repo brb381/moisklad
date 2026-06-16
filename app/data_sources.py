@@ -10,13 +10,14 @@ from .moysklad import MoySkladClient
 
 class SalesProvider(ABC):
     @abstractmethod
-    def load_daily_sales(self, store: str, start: date, end: date) -> dict[date, DailySales]:
+    async def load_daily_sales(self, store: str, start: date, end: date) -> dict[date, DailySales]:
         raise NotImplementedError
 
 
 class MoySkladSalesProvider(SalesProvider):
-    def load_daily_sales(self, store: str, start: date, end: date) -> dict[date, DailySales]:
-        return MoySkladClient().load_daily_sales(store, start, end)
+    async def load_daily_sales(self, store: str, start: date, end: date) -> dict[date, DailySales]:
+        async with MoySkladClient() as client:
+            return await client.load_daily_sales(store, start, end)
 
 
 def get_sales_provider(source: str | None = None) -> SalesProvider:

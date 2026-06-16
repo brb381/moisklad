@@ -1,106 +1,81 @@
-# API отчетов МойСклад
+# MoySklad Gross Turnover Reports API
 
-Сервис генерирует Excel-отчеты о валовом обороте по данным боевого API МойСклад.
+FastAPI-сервис для генерации Excel-отчетов о валовом обороте по данным МойСклад.
 
-## Безопасность
+## Stack
 
-Интеграция с МойСклад работает только на чтение.
+- Python
+- FastAPI
+- SQLite
+- httpx
+- openpyxl
 
-В HTTP-клиенте разрешен только метод `GET`. Любые `POST`, `PUT`, `PATCH`, `DELETE` и другие методы запрещены кодом.
+## Safety
 
-Токен нельзя сбрасывать, перевыпускать, отзывать или ротировать из этого проекта. Токен только читается из локального `.env` и используется для авторизации read-only запросов.
+- МойСклад-клиент разрешает только `GET`.
+- `POST`, `PUT`, `PATCH`, `DELETE` к МойСклад запрещены кодом.
+- Токен читается только из локального `.env`.
+- `.env`, `jobs.sqlite3`, `generated/` не коммитятся.
 
-Файл `.env` не коммитится.
+## Run
 
-## Запуск
-
-1. Создать `.env` рядом с `.env.example`.
-2. Записать токен:
+Создать `.env`:
 
 ```env
 MOYSKLAD_TOKEN=...
 DATA_SOURCE=moysklad
+REPORT_WORKERS=1
+MOYSKLAD_MAX_CONCURRENT_REQUESTS=2
+MOYSKLAD_MIN_REQUEST_INTERVAL_SECONDS=0.25
+MOYSKLAD_RETRY_ATTEMPTS=3
+MOYSKLAD_RETRY_BASE_DELAY_SECONDS=1.0
+REPORT_RESULT_TTL_SECONDS=3600
 ```
 
-3. Запустить API:
+Запуск:
 
 ```bat
 run_api.bat
 ```
 
-Сервис поднимется на:
+URL:
 
 ```text
 http://127.0.0.1:8010
 ```
 
-## Проверка МойСклад
+## Stores
 
-Получить реальные торговые точки из МойСклад:
+Магазины настраиваются в `stores.json`.
+
+Проверенная точка:
+
+```text
+planeta -> bcbff9c3-79c4-11f0-0a80-05d4001f0e49
+```
+
+Получить точки из МойСклад:
 
 ```bat
 diagnose_moysklad.bat
 ```
 
-Или через API:
+или:
 
 ```http
 GET /moysklad/stores
 ```
 
-Эта проверка делает только:
-
-```http
-GET /entity/retailstore
-```
-
-## Магазины
-
-Магазины настраиваются в `stores.json`.
-
-Сейчас проверена и привязана:
-
-```text
-planeta -> 5LB, 9 Мая, д.77, ТРЦ Планета
-```
-
-ID точки МойСклад:
-
-```text
-bcbff9c3-79c4-11f0-0a80-05d4001f0e49
-```
-
-Чтобы добавить новый магазин:
-
-1. Получить список точек через `GET /moysklad/stores`.
-2. Найти нужный `id`.
-3. Добавить или обновить запись в `stores.json`.
-4. Указать `moysklad_retail_store_id`.
-
-Отдельный Excel-шаблон под каждый магазин не обязателен. Если шаблон с названием магазина не найден, используется общий шаблон из `templates/`.
-
-## Ручки API
-
-Проверка сервиса:
+## API
 
 ```http
 GET /health
-```
-
-Настроенные магазины:
-
-```http
 GET /stores
-```
-
-Месяцы для фронта:
-
-```http
 GET /months
 GET /months?months_back=36
 ```
 
-Создать задачу генерации отчета:
+Создать отчет:
 
 ```http
 POST /reports/gross-turnover
@@ -113,45 +88,62 @@ Content-Type: application/json
 }
 ```
 
-Проверить статус:
+Статус:
 
 ```http
 GET /reports/jobs/{job_id}
 ```
 
-Скачать готовый Excel:
+Скачать:
 
 ```http
 GET /reports/jobs/{job_id}/download
 ```
 
-Синхронная ручка для ручной проверки:
+Синхронная проверка:
 
 ```http
 GET /reports/gross-turnover?store=planeta&month=2026-05&source=moysklad
 ```
 
-## Excel
+## Jobs
 
-Шаблоны лежат в:
+Задачи хранятся в `jobs.sqlite3`.
+
+Dedup key:
+
+```text
+store + month + source
+```
+
+TTL готового отчета:
+
+```text
+REPORT_RESULT_TTL_SECONDS=3600
+```
+
+Правила:
+
+- `queued` / `processing` возвращают существующий `job_id`.
+- `done` младше TTL возвращает существующий `job_id`.
+- `done` старше TTL пересоздается.
+- `failed` пересоздается.
+
+## Files
+
+Шаблоны:
 
 ```text
 templates/
 ```
 
-Готовые отчеты сохраняются в:
+Готовые отчеты:
 
 ```text
 generated/
 ```
 
-В текущей чистой поставке оставлен один рабочий шаблон:
-
-```text
-templates/Форма_Отчета_о_валовом_обороте_2026_май_Планета.xlsx
-```
-
-Последний проверенный отчет был собран по `planeta` за `2026-05`:
+Проверенный отчет `planeta / 2026-05`:
 
 ```text
 Оборот: 848 864.70

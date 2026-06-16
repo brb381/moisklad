@@ -1,6 +1,8 @@
 .venv/
 .env
 generated/
+jobs.sqlite3
+jobs.sqlite3-*
 .pytest_cache/
 __pycache__/
 *.py[cod]

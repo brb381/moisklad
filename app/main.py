@@ -1,22 +1,32 @@
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 from datetime import date
-
-from pydantic import BaseModel, Field
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
 
 from .data_sources import get_sales_provider
 from .dates import parse_month
-from .jobs import create_report_job, get_report_job
+from .jobs import create_report_job, get_report_job, start_workers, stop_workers
 from .models import JobStatus
 from .moysklad import MoySkladClient
 from .report import build_report
 from .stores import list_stores
 
 
-app = FastAPI(title="MoySklad Gross Turnover Reports")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await start_workers()
+    try:
+        yield
+    finally:
+        await stop_workers()
+
+
+app = FastAPI(title="MoySklad Gross Turnover Reports", lifespan=lifespan)
 
 MONTH_NAMES = {
     1: "Январь",
@@ -59,10 +69,9 @@ def months(months_back: int = Query(24, ge=1, le=120)):
         month_index = current_index - offset
         year = month_index // 12
         month = month_index % 12 + 1
-        value = f"{year:04d}-{month:02d}"
         result.append(
             {
-                "value": value,
+                "value": f"{year:04d}-{month:02d}",
                 "label": f"{MONTH_NAMES[month]} {year}",
                 "year": year,
                 "month": month,
@@ -73,10 +82,10 @@ def months(months_back: int = Query(24, ge=1, le=120)):
 
 
 @app.get("/moysklad/stores")
-def moysklad_stores():
-    """Diagnostic endpoint for binding local store codes to MoySklad retailstore IDs."""
+async def moysklad_stores():
     try:
-        return {"stores": MoySkladClient().list_retail_stores()}
+        async with MoySkladClient() as client:
+            return {"stores": await client.list_retail_stores()}
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except Exception as exc:
@@ -143,20 +152,16 @@ def download_job_result(job_id: str):
 
 
 @app.get("/reports/gross-turnover")
-def gross_turnover_report(
+async def gross_turnover_report(
     store: str = Query(..., description="Retail store name or part of name"),
     month: str = Query(..., pattern=r"^\d{4}-\d{2}$", description="YYYY-MM"),
     source: str = Query("moysklad", pattern=r"^moysklad$"),
 ):
-    """Compatibility endpoint: generate immediately.
-
-    Production clients should use POST /reports/gross-turnover and poll job status.
-    """
     try:
         start, end = parse_month(month)
         provider = get_sales_provider(source)
-        daily_sales = provider.load_daily_sales(store, start, end)
-        output = build_report(store, start, end, daily_sales)
+        daily_sales = await provider.load_daily_sales(store, start, end)
+        output = await asyncio.to_thread(build_report, store, start, end, daily_sales)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:

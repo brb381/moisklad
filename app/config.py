@@ -27,6 +27,20 @@ class Settings:
     moysklad_login: str | None = optional_env("MOYSKLAD_LOGIN")
     moysklad_password: str | None = optional_env("MOYSKLAD_PASSWORD")
 
+    data_source: str = os.getenv("DATA_SOURCE", "moysklad")
+    report_workers: int = int(os.getenv("REPORT_WORKERS", "1"))
+    moysklad_max_concurrent_requests: int = int(
+        os.getenv("MOYSKLAD_MAX_CONCURRENT_REQUESTS", "2")
+    )
+    moysklad_min_request_interval_seconds: float = float(
+        os.getenv("MOYSKLAD_MIN_REQUEST_INTERVAL_SECONDS", "0.25")
+    )
+    moysklad_retry_attempts: int = int(os.getenv("MOYSKLAD_RETRY_ATTEMPTS", "3"))
+    moysklad_retry_base_delay_seconds: float = float(
+        os.getenv("MOYSKLAD_RETRY_BASE_DELAY_SECONDS", "1.0")
+    )
+    report_result_ttl_seconds: int = int(os.getenv("REPORT_RESULT_TTL_SECONDS", "3600"))
+
     report_tenant: str = os.getenv("REPORT_TENANT", "ИП Леонтьев Д.С,")
     report_trade_name: str = os.getenv("REPORT_TRADE_NAME", "5LB")
     report_rent_contract: str = os.getenv("REPORT_RENT_CONTRACT", "№1276К-25-ДАК")
@@ -35,8 +49,6 @@ class Settings:
         "REPORT_TAX_SYSTEM", "ОСНО  ;         УСНО ;     Патент"
     )
     report_fiscal_operator: str = os.getenv("REPORT_FISCAL_OPERATOR", "Эватор")
-    data_source: str = os.getenv("DATA_SOURCE", "mock")
-    max_report_workers: int = int(os.getenv("MAX_REPORT_WORKERS", "2"))
 
 
 settings = Settings()
